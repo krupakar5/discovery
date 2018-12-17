@@ -1,0 +1,88 @@
+server:
+  port: 10245
+  ssl:
+    enabled: false
+
+management:
+  port: 11245
+  context-path: /
+  security:
+    enabled: false
+
+spring:
+  profiles:
+    active: PROD
+  application:
+    name: discovery-server
+  zipkin:
+    base-url: http://${ZIPKIN_SERVER}:8888
+  sleuth:
+    enabled: false
+    sampler:
+      percentage: 0.01
+
+eureka:
+  # Configure standalone mode, see http://cloud.spring.io/spring-cloud-netflix/spring-cloud-netflix.html#_standalone_mode
+  datacenter: cloud
+  region: us-east-1
+  #shouldUseDns: true
+  #preferSameZone: true
+  environment: PROD
+  instance:
+    hostname: ${local-hostname}
+    ipAddress: ${local-ipv4}
+    preferIpAddress: true
+    # forceHostAddress: 127.0.0.1
+    # preferredNic: lo
+    leaseRenewalIntervalInSeconds: 3
+    leaseExpirationDurationInSeconds: 5
+    statusPageUrlPath: ${management.context-path}info
+    healthCheckUrlPath: ${management.context-path}health
+    managementUrlPath: ${management.context-path}/
+    metadataMap:
+      management:
+        port: ${management.port}
+        context-path: ${management.context-path}
+      managementUrl: http://${eureka.instance.ipAddress}:${management.port}${management.context-path}
+      instanceId: ${vcap.application.instance_id:${spring.application.name}_${eureka.instance.ipAddress}:${server.port}}
+    instanceId: ${vcap.application.instance_id:${spring.application.name}_${eureka.instance.ipAddress}:${server.port}}
+  client:
+    registerWithEureka: false
+    fetchRegistry: true
+    registryFetchIntervalSeconds: 3
+    serviceUrl:
+      #defaultZone: http://127.0.0.1:10245/eureka/ # ,http://127.0.0.1:7103/eureka/
+      defaultZone: http://${DISCOVERY_SERVER1}:10245/eureka/,http://${DISCOVERY_SERVER2}:10245/eureka/
+    #healthcheck:
+    #  enabled: true
+  server:
+    # Disable self-preservation during development, see https://github.com/Netflix/eureka/wiki/Understanding-Eureka-Peer-to-Peer-Communication
+    enableSelfPreservation: false
+    #renewalPercentThreshold: 2                # renewal threshold is : 4 for value 2
+    #renewalThresholdUpdateIntervalMs: 60000   # 60000 is 60 seconds
+    # Set this only for this sample service without which starting the instance will by default wait for the default of 5 mins
+    waitTimeInMsWhenSyncEmpty: 3000
+    # for the example, set this to zero as we will not have peers to sync up with.
+    # Do not set in a real environment with multi-node eureka clusters.
+    #registrySyncRetries: 3
+    response-cache-update-interval-ms: 2000
+    eviction-interval-timer-in-ms: 2000
+    #number-of-replication-retries: 3
+#eureka.client.serviceUrl.defaultZone: http://discovery:8761/eureka/
+
+ribbon:
+  ReadTimeout: 15000
+  ConnectTimeout: 3000
+  OkToRetryOnAllOperations: true
+  MaxAutoRetriesNextServer: 2
+  MaxAutoRetries: 1
+  serverListRefreshInterval: 2000
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          strategy: THREAD
+          thread:
+            timeoutInMilliseconds: 30000

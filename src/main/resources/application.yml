@@ -1,0 +1,12 @@
+
+info:
+  component: Discovery Server
+
+endpoints:
+  health:
+    sensitive: false
+
+
+security:
+  basic:
+    enabled: false
